@@ -20,8 +20,8 @@ except FileNotFoundError:
     posts = []
 
 # Welcome screen
-st.title("SocialCosmos")
-st.write("Welcome to SocialCosmos - Your Simple Social Network!")
+st.title("SocialSphere")
+st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
 menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Create Post", "Random Posts", "User Profile"])
@@ -52,15 +52,22 @@ if menu == "Register":
 elif menu == "Create Post":
     st.subheader("Create Post")
 
+    # Get current user's username
+    if "username" in st.session_state:
+        username = st.session_state["username"]
+    else:
+        username = "Anonymous"
+
     # Post form
     new_post = st.text_area("Write your post here", height=100)
     if st.button("Post"):
         if new_post.strip() != "":
-            posts.append({"content": new_post})
+            # Add the post to the list of posts
+            posts.append({"author": username, "content": new_post})
             # Store posts permanently
             with open(POSTS_FILE, "w") as file:
                 json.dump(posts, file)
-            st.success("Post created successfully!")                 
+            st.success("Post created successfully!")
         else:
             st.error("Post cannot be empty!")
 
@@ -68,12 +75,12 @@ elif menu == "Create Post":
 elif menu == "Random Posts":
     st.subheader("Random Posts")
 
-    # Display random posts
-    if posts:
-        random_post = random.choice(posts)
-        st.write(random_post["content"])
-    else:
-        st.write("No posts available.")
+    # Display all posts
+    for post in posts:
+        author = post["author"]
+        content = post["content"]
+        st.write(f"**Author:** {author}")
+        st.write(content)
 
 # User profile page
 elif menu == "User Profile":
@@ -85,7 +92,7 @@ elif menu == "User Profile":
     st.write(f"**Username:** {user_profile.get('username', 'Anonymous')}")
     bio = st.text_area("Edit Bio", value=user_profile.get("bio", ""))
     if st.button("Save Bio"):
-        user_profile["bio"] = bio 
+        user_profile["bio"] = bio
         user_profiles[username] = user_profile
         # Store profiles permanently
         with open(USER_PROFILES_FILE, "w") as file:
@@ -95,5 +102,5 @@ elif menu == "User Profile":
 # Display welcome screen
 elif menu == "Welcome":
     st.subheader("Welcome!")
-    st.write("This is SocialCosmos - a simple social network where you can register, create posts, and view user profiles.")
+    st.write("This is SocialSphere - a simple social network where you can register, create posts, and view user profiles.")
     st.write("Use the tabs on the left to navigate.")
