@@ -19,12 +19,27 @@ try:
 except FileNotFoundError:
     posts = []
 
+# Load messages from a JSON file (create one if it doesn't exist)
+MESSAGES_FILE = "messages.json"
+try:
+    with open(MESSAGES_FILE, "r") as file:
+        messages = json.load(file)
+except FileNotFoundError:
+    messages = {}
+
+# Function to authenticate user
+def authenticate_user(username, password):
+    if username in user_profiles:
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        return hashed_password == user_profiles[username]["password"]
+    return False
+
 # Welcome screen
 st.title("SocialSphere")
 st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
-menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Create Post", "Random Posts", "User Profile"])
+menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat"])
 
 # Registration page
 if menu == "Register":
@@ -42,11 +57,24 @@ if menu == "Register":
             # Hash the password before storing
             hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
             # Create an empty profile for the user
-            user_profiles[new_username] = {"username": new_username, "bio": ""}
+            user_profiles[new_username] = {"username": new_username, "password": hashed_password, "bio": ""}
             # Store user profiles permanently
             with open(USER_PROFILES_FILE, "w") as file:
                 json.dump(user_profiles, file)
-            st.success("Registration successful! You can now create posts and view your profile.")
+            st.success("Registration successful! You can now log in.")
+
+# Login page
+elif menu == "Login":
+    st.subheader("Login Page")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if authenticate_user(username, password):
+            st.success("Login successful!")
+            st.session_state["username"] = username
+        else:
+            st.error("Invalid username or password!")
 
 # Create post page
 elif menu == "Create Post":
@@ -86,8 +114,12 @@ elif menu == "Random Posts":
 elif menu == "User Profile":
     st.subheader("User Profile")
 
-    # Get current user's profile
-    username = st.text_input("Enter Username")
+    # Get current user's username
+    if "username" in st.session_state:
+        username = st.session_state["username"]
+    else:
+        username = "Anonymous"
+
     user_profile = user_profiles.get(username, {})
     st.write(f"**Username:** {user_profile.get('username', 'Anonymous')}")
     bio = st.text_area("Edit Bio", value=user_profile.get("bio", ""))
@@ -99,8 +131,43 @@ elif menu == "User Profile":
             json.dump(user_profiles, file)
         st.success("Bio updated successfully!")
 
+# Chat page
+elif menu == "Chat":
+    st.subheader("Chat")
+
+    # Get current user's username
+    if "username" in st.session_state:
+        username = st.session_state["username"]
+    else:
+        username = "Anonymous"
+
+    # Select user to chat with
+    selected_user = st.selectbox("Select User", list(user_profiles.keys()))
+
+    # Display chat history
+    if selected_user in messages:
+        st.write("Chat History:")
+        for message in messages[selected_user]:
+            st.write(f"{message['sender']}: {message['content']}")
+    else:
+        st.write("No chat history available.")
+
+    # Input message
+    new_message = st.text_input("Type your message:")
+    if st.button("Send"):
+        if new_message.strip() != "":
+            if selected_user not in messages:
+                messages[selected_user] = []
+            messages[selected_user].append({"sender": username, "content": new_message})
+            # Store messages permanently
+            with open(MESSAGES_FILE, "w") as file:
+                json.dump(messages, file)
+            st.success("Message sent successfully!")
+        else:
+            st.error("Message cannot be empty!")
+
 # Display welcome screen
 elif menu == "Welcome":
     st.subheader("Welcome!")
-    st.write("This is SocialSphere - a simple social network where you can register, create posts, and view user profiles.")
+    st.write("This is SocialSphere - a simple social network where you can register, log in, create posts, view user profiles, chat with other users, and browse random posts.")
     st.write("Use the tabs on the left to navigate.")
