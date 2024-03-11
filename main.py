@@ -2,6 +2,7 @@ import streamlit as st
 import hashlib
 import json
 import random
+import base64
 
 # Load user profiles from a JSON file (create one if it doesn't exist)
 USER_PROFILES_FILE = "user_profiles.json"
@@ -88,10 +89,16 @@ elif menu == "Create Post":
 
     # Post form
     new_post = st.text_area("Write your post here", height=100)
+    uploaded_file = st.file_uploader("Upload image for the post (optional)", type=["jpg", "jpeg", "png"])
+
     if st.button("Post"):
         if new_post.strip() != "":
             # Add the post to the list of posts
-            posts.append({"author": username, "content": new_post})
+            post_data = {"author": username, "content": new_post}
+            if uploaded_file is not None:
+                image_data = uploaded_file.read()
+                post_data["image"] = base64.b64encode(image_data).decode('utf-8')
+            posts.append(post_data)
             # Store posts permanently
             with open(POSTS_FILE, "w") as file:
                 json.dump(posts, file)
@@ -109,6 +116,9 @@ elif menu == "Random Posts":
         content = post["content"]
         st.write(f"**Author:** {author}")
         st.write(content)
+        if "image" in post:
+            image_data = base64.b64decode(post["image"])
+            st.image(image_data, caption='Uploaded Image', use_column_width=True)
 
 # User profile page
 elif menu == "User Profile":
@@ -149,16 +159,24 @@ elif menu == "Chat":
         st.write("Chat History:")
         for message in messages[selected_user]:
             st.write(f"{message['sender']}: {message['content']}")
+            if "image" in message:
+                image_data = base64.b64decode(message["image"])
+                st.image(image_data, caption='Uploaded Image', use_column_width=True)
     else:
         st.write("No chat history available.")
 
     # Input message
     new_message = st.text_input("Type your message:")
+    uploaded_file = st.file_uploader("Upload image for the message (optional)", type=["jpg", "jpeg", "png"])
     if st.button("Send"):
         if new_message.strip() != "":
             if selected_user not in messages:
                 messages[selected_user] = []
-            messages[selected_user].append({"sender": username, "content": new_message})
+            message_data = {"sender": username, "content": new_message}
+            if uploaded_file is not None:
+                image_data = uploaded_file.read()
+                message_data["image"] = base64.b64encode(image_data).decode('utf-8')
+            messages[selected_user].append(message_data)
             # Store messages permanently
             with open(MESSAGES_FILE, "w") as file:
                 json.dump(messages, file)
