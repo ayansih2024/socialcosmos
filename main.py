@@ -3,7 +3,6 @@ import hashlib
 import json
 import random
 import base64
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 # Load user profiles from a JSON file (create one if it doesn't exist)
 USER_PROFILES_FILE = "user_profiles.json"
@@ -36,17 +35,12 @@ def authenticate_user(username, password):
         return hashed_password == user_profiles[username]["password"]
     return False
 
-# Video transformer for webrtc streamer
-class VideoTransformer(VideoTransformerBase):
-    def transform(self, frame):
-        return frame
-
 # Welcome screen
 st.title("SocialSphere")
 st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
-menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call"])
+menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat"])
 
 # Registration page
 if menu == "Register":
@@ -165,41 +159,30 @@ elif menu == "Chat":
         st.write("Chat History:")
         for message in messages[selected_user]:
             st.write(f"{message['sender']}: {message['content']}")
+            if "image" in message:
+                image_data = base64.b64decode(message["image"])
+                st.image(image_data, caption='Uploaded Image', use_column_width=True)
     else:
         st.write("No chat history available.")
 
     # Input message
     new_message = st.text_input("Type your message:")
+    uploaded_file = st.file_uploader("Upload image for the message (optional)", type=["jpg", "jpeg", "png"])
     if st.button("Send"):
         if new_message.strip() != "":
             if selected_user not in messages:
                 messages[selected_user] = []
-            messages[selected_user].append({"sender": username, "content": new_message})
+            message_data = {"sender": username, "content": new_message}
+            if uploaded_file is not None:
+                image_data = uploaded_file.read()
+                message_data["image"] = base64.b64encode(image_data).decode('utf-8')
+            messages[selected_user].append(message_data)
             # Store messages permanently
             with open(MESSAGES_FILE, "w") as file:
                 json.dump(messages, file)
             st.success("Message sent successfully!")
         else:
             st.error("Message cannot be empty!")
-
-# Video call page
-elif menu == "Video Call":
-    st.subheader("Video Call")
-
-    # Get current user's username
-    if "username" in st.session_state:
-        username = st.session_state["username"]
-    else:
-        username = "Anonymous"
-
-    st.write("Select user to call:")
-    user_to_call = st.selectbox("Select User", list(user_profiles.keys()))
-
-    # Video call streamer
-    webrtc_streamer(key=f"video-call-{user_to_call}",
-                    video_transformer_factory=VideoTransformer,
-                    async_transform=True,
-                    )
 
 # Display welcome screen
 elif menu == "Welcome":
