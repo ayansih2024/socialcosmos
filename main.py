@@ -197,7 +197,7 @@ elif menu == "Video Call":
 
     # Video call streamer
     webrtc_streamer(key=f"video-call-{user_to_call}",
-                    video_transformer_factory=VideoTransformer,
+                    video_processor_factory=VideoTransformer,
                     async_transform=True,
                     )
 
