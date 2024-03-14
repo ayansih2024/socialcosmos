@@ -71,14 +71,14 @@ st.write("Welcome to SocialSphere - Your Simple Social Network!")
 # Sidebar for navigation
 menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat"])
 
-# Remember me checkbox
-remember_me = st.sidebar.checkbox("Remember Me")
-
 # Check if user is already logged in
 if "username" in st.session_state:
-    username = st.session_state["username"]
+    current_user = st.session_state["username"]
 else:
-    username = None
+    current_user = None
+
+# Remember me checkbox
+remember_me = st.sidebar.checkbox("Remember Me")
 
 # Registration page
 if menu == "Register":
@@ -111,6 +111,7 @@ if menu == "Login":
     if st.button("Login"):
         if authenticate_user(username, password):
             st.success("Login successful!")
+            current_user = username
             if remember_me:
                 st.session_state["username"] = username
         else:
@@ -119,12 +120,6 @@ if menu == "Login":
 # Create post page
 if menu == "Create Post":
     st.subheader("Create Post")
-
-    # Get current user's username
-    if username:
-        current_user = username
-    else:
-        current_user = "Anonymous"
 
     # Post form
     new_post = st.text_area("Write your post here", height=100)
@@ -163,12 +158,6 @@ if menu == "Random Posts":
 if menu == "User Profile":
     st.subheader("User Profile")
 
-    # Get current user's username
-    if username:
-        current_user = username
-    else:
-        current_user = "Anonymous"
-
     user_profile = user_profiles.get(current_user, {})
     st.write(f"**Username:** {user_profile.get('username', 'Anonymous')}")
     bio = st.text_area("Edit Bio", value=user_profile.get("bio", ""))
@@ -183,12 +172,6 @@ if menu == "User Profile":
 # Chat page
 if menu == "Chat":
     st.subheader("Chat")
-
-    # Get current user's username
-    if username:
-        current_user = username
-    else:
-        current_user = "Anonymous"
 
     # Select user to chat with
     selected_user = st.selectbox("Select User", list(user_profiles.keys()))
@@ -218,12 +201,6 @@ if menu == "Chat":
 # Video call page
 if menu == "Video Call":
     st.subheader("Video Call")
-
-    # Get current user's username
-    if username:
-        current_user = username
-    else:
-        current_user = "Anonymous"
 
     st.write("Select user to call:")
     user_to_call = st.selectbox("Select User", list(user_profiles.keys()))
@@ -268,12 +245,6 @@ if menu == "Group Management":
 # Group chat page
 if menu == "Group Chat":
     st.subheader("Group Chat")
-
-    # Get current user's username
-    if username:
-        current_user = username
-    else:
-        current_user = "Anonymous"
 
     # Select group to chat in
     selected_group = st.selectbox("Select Group", list(groups.keys()))
