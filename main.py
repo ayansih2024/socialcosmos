@@ -69,7 +69,7 @@ st.title("SocialSphere")
 st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
-menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat"])
+menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat", "About"])
 
 # Check if user is already logged in
 if "username" in st.session_state:
