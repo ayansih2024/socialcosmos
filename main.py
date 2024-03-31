@@ -286,9 +286,9 @@ if menu == "About":
     st.write("Programmers:")
     st.write("- Ayan Gantayat")
     st.write("- Radek Katyal")
-    st.write("Designers:")
-    st.write("- Sanah Pathak")
-    st.write("- Sanaya")
+    st.write("Designer:")
+    st.write("- Animi Yakshit")
+   
 
 # Display welcome screen
 if menu == "Welcome":
