@@ -65,8 +65,8 @@ def leave_group(group_name, username):
     return False
 
 # Welcome screen
-st.title("SocialSphere")
-st.write("Welcome to SocialSphere - Your Simple Social Network!")
+st.title("SocialCosmos")
+st.write("Welcome to SocialCosmos - Your Simple Social Network!")
 
 # Sidebar for navigation
 menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat", "About"])
@@ -287,11 +287,11 @@ if menu == "About":
     st.write("- Ayan Gantayat")
     st.write("- Radek Katyal")
     st.write("Designer:")
-    st.write("- Animi Yakshit")
+    st.write("- Animi Yakshit")         
    
 
 # Display welcome screen
 if menu == "Welcome":
     st.subheader("Welcome!")
-    st.write("This is SocialSphere - a simple social network where you can register, log in, create posts, view user profiles, chat with other users, and browse random posts.")
+    st.write("This is SocialCosmos - a place where you can hang out and make yourself cozy")
     st.write("Use the tabs on the left to navigate.")
