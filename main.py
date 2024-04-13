@@ -1,3 +1,4 @@
+#created by the god (Ayan Gantayat)
 import streamlit as st
 import hashlib
 import json
@@ -65,8 +66,8 @@ def leave_group(group_name, username):
     return False
 
 # Welcome screen
-st.title("SocialCosmos")
-st.write("Welcome to SocialCosmos - Your Simple Social Network!")
+st.title("SocialSphere")
+st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
 menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat", "About"])
@@ -160,6 +161,20 @@ if menu == "User Profile":
 
     user_profile = user_profiles.get(current_user, {})
     st.write(f"**Username:** {user_profile.get('username', 'Anonymous')}")
+
+    # Profile Picture Upload
+    profile_picture = st.file_uploader("Upload Profile Picture", type=["jpg", "jpeg", "png"])
+
+    if profile_picture is not None:
+        # Read the image data
+        image_data = profile_picture.read()
+        # Store the image securely
+        # For simplicity, we'll just save the image to a file with a fixed name for each user
+        # In a real application, you would want to use a unique identifier for the filename
+        with open(f"profile_{current_user}_picture.png", "wb") as f:
+            f.write(image_data)
+        st.success("Profile picture uploaded successfully!")
+
     bio = st.text_area("Edit Bio", value=user_profile.get("bio", ""))
     if st.button("Save Bio"):
         user_profile["bio"] = bio
@@ -288,10 +303,9 @@ if menu == "About":
     st.write("- Radek Katyal")
     st.write("Designer:")
     st.write("- Animi Yakshit")         
-   
 
 # Display welcome screen
 if menu == "Welcome":
     st.subheader("Welcome!")
-    st.write("This is SocialCosmos - a place where you can hang out and make yourself cozy")
+    st.write("This is SocialCosmos - a simple social network where you can register, log in, create posts, view user profiles, chat with other users, and browse random posts.")
     st.write("Use the tabs on the left to navigate.")
