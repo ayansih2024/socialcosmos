@@ -1,4 +1,4 @@
-#created by the god (Ayan Gantayat)
+# created by ayan gantayat
 import streamlit as st
 import hashlib
 import json
@@ -70,7 +70,7 @@ st.title("SocialSphere")
 st.write("Welcome to SocialSphere - Your Simple Social Network!")
 
 # Sidebar for navigation
-menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat", "About"])
+menu = st.sidebar.radio("Menu", ["Welcome", "Register", "Login", "Create Post", "Random Posts", "User Profile", "Chat", "Video Call", "Group Management", "Group Chat", "About", "friends"])
 
 # Check if user is already logged in
 if "username" in st.session_state:
@@ -302,7 +302,111 @@ if menu == "About":
     st.write("- Ayan Gantayat")
     st.write("- Radek Katyal")
     st.write("Designer:")
-    st.write("- Animi Yakshit")         
+    st.write("- Animi Yakshit")    
+    import streamlit as st
+import json
+
+# Load user profiles from a JSON file (create one if it doesn't exist)
+USER_PROFILES_FILE = "user_profiles.json"
+try:
+    with open(USER_PROFILES_FILE, "r") as file:
+        user_profiles = json.load(file)
+except FileNotFoundError:
+    user_profiles = {}
+
+# Initialize friends and friend requests in user profiles
+for username, profile in user_profiles.items():
+    if "friends" not in profile:
+        profile["friends"] = []
+    if "friend_requests" not in profile:
+        profile["friend_requests"] = []
+
+# Function to save user profiles
+def save_user_profiles():
+    with open(USER_PROFILES_FILE, "w") as file:
+        json.dump(user_profiles, file, indent=4)
+
+save_user_profiles()  # Save the updated structure
+
+# Send a friend request
+def send_friend_request(sender, receiver):
+    if receiver in user_profiles and sender != receiver:
+        if sender not in user_profiles[receiver]["friend_requests"]:
+            user_profiles[receiver]["friend_requests"].append(sender)
+            save_user_profiles()
+            return True
+    return False
+
+# Accept a friend request
+def accept_friend_request(username, friend_username):
+    if username in user_profiles and friend_username in user_profiles[username]["friend_requests"]:
+        user_profiles[username]["friend_requests"].remove(friend_username)
+        user_profiles[username]["friends"].append(friend_username)
+        user_profiles[friend_username]["friends"].append(username)
+        save_user_profiles()
+        return True
+    return False
+
+# Get friend requests
+def get_friend_requests(username):
+    if username in user_profiles:
+        return user_profiles[username]["friend_requests"]
+    return []
+
+# Get friends list
+def get_friends(username):
+    if username in user_profiles:
+        return user_profiles[username]["friends"]
+    return []
+
+# Example usage in Streamlit
+
+# Check if user is already logged in
+if "username" in st.session_state:
+    current_user = st.session_state["username"]
+else:
+    current_user = None
+
+# Friends page
+if st.sidebar.radio("Menu", ["Friends"]) == "Friends":
+    st.subheader("Friends Management")
+
+    # Check if user is logged in
+    if current_user:
+        # Send a friend request
+        st.subheader("Send Friend Request")
+        friend_username = st.text_input("Enter the username of the person you want to add as a friend")
+        if st.button("Send Request"):
+            if send_friend_request(current_user, friend_username):
+                st.success(f"Friend request sent to {friend_username}!")
+            else:
+                st.error("Failed to send friend request!")
+
+        # View and accept friend requests
+        st.subheader("Friend Requests")
+        friend_requests = get_friend_requests(current_user)
+        if friend_requests:
+            for req in friend_requests:
+                st.write(f"Friend request from: {req}")
+                if st.button(f"Accept {req}'s request"):
+                    if accept_friend_request(current_user, req):
+                        st.success(f"Accepted friend request from {req}!")
+                    else:
+                        st.error("Failed to accept friend request!")
+        else:
+            st.write("No friend requests.")
+
+        # View friends list
+        st.subheader("Friends List")
+        friends = get_friends(current_user)
+        if friends:
+            for friend in friends:
+                st.write(friend)
+        else:
+            st.write("You have no friends yet.")
+    else:
+        st.error("Please log in to manage friends.")
+     
 
 # Display welcome screen
 if menu == "Welcome":
