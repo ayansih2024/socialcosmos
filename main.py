@@ -1,4 +1,3 @@
-# created by ayan gantayat
 import streamlit as st
 import hashlib
 import json
@@ -298,11 +297,11 @@ if menu == "Group Chat":
 if menu == "About":
     st.subheader("About")
     st.write("This application was created by The SocialCosmos team.")
-    st.write("Programmers:")
+    st.write("Programmer:")
     st.write("- Ayan Gantayat")
-    st.write("- Radek Katyal")
     st.write("Designer:")
-    st.write("- Animi Yakshit")    
+    st.write("- Shreemoyee Shaw")
+    st.write("- Sanah Pathak")    
     import streamlit as st
 import json
 
@@ -413,3 +412,4 @@ if menu == "Welcome":
     st.subheader("Welcome!")
     st.write("This is SocialCosmos - a simple social network where you can register, log in, create posts, view user profiles, chat with other users, and browse random posts.")
     st.write("Use the tabs on the left to navigate.")
+    
