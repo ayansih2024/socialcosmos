@@ -3,6 +3,49 @@ import hashlib
 import json
 import base64
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+from sqlalchemy import create_engine, Column, Integer, String, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
+DATABASE_URL = os.getenv("postgresql://social_db_z0i5_user:AUYnSAoKTF4nc7uzdznbyisQh3bHjOur@dpg-cvfoer7noe9s73bj9m2g-a/social_db_z0i5")  # Read the database URL from environment variables
+Base = declarative_base()
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+session = Session()
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    bio = Column(Text, default="")
+
+class Post(Base):
+    __tablename__ = 'posts'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text, nullable=False)
+    image = Column(Text, nullable=True)
+
+class Message(Base):
+    __tablename__ = 'messages'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sender = Column(String, nullable=False)
+    recipient = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+
+class Group(Base):
+    __tablename__ = 'groups'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    creator = Column(String, nullable=False)
+
+class GroupMessage(Base):
+    __tablename__ = 'group_messages'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(Integer, nullable=False)
+    sender = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+
+
 
 # Load user profiles from a JSON file (create one if it doesn't exist)
 USER_PROFILES_FILE = "user_profiles.json"
@@ -251,24 +294,26 @@ elif menu == "Register":
     confirm_password = st.text_input("Confirm Password", type="password")
 
     if st.button("Register"):
-        if new_username in user_profiles:
+        if session.query(User).filter_by(username=new_username).first():
             st.error("Username already exists!")
         elif new_password != confirm_password:
             st.error("Passwords do not match!")
         else:
             hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
-            user_profiles[new_username] = {"username": new_username, "password": hashed_password, "bio": ""}
-            with open(USER_PROFILES_FILE, "w") as file:
-                json.dump(user_profiles, file)
+            new_user = User(username=new_username, password=hashed_password)
+            session.add(new_user)
+            session.commit()
             st.success("Registration successful! You can now log in.")
 
-elif menu == "Login":
+if menu == "Login":
     st.subheader("Login Page")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if authenticate_user(username, password):
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        user = session.query(User).filter_by(username=username, password=hashed_password).first()
+        if user:
             st.success("Login successful!")
         else:
             st.error("Invalid username or password!")
@@ -280,25 +325,35 @@ elif menu == "Create Post":
 
     if st.button("Post"):
         if new_post.strip() != "":
-            post_data = {"content": new_post}
-            if uploaded_file is not None:
-                image_data = uploaded_file.read()
-                post_data["image"] = base64.b64encode(image_data).decode('utf-8')
-            posts.append(post_data)
-            with open(POSTS_FILE, "w") as file:
-                json.dump(posts, file)
+            image_base64 = None
+            if uploaded_file:
+                image_base64 = base64.b64encode(uploaded_file.read()).decode('utf-8')
+            post = Post(content=new_post, image=image_base64)
+            session.add(post)
+            session.commit()
             st.success("Post created successfully!")
         else:
             st.error("Post cannot be empty!")
 
-elif menu == "Random Posts":
+
+if menu == "Random Posts":
     st.subheader("Random Posts")
-    for post in posts:
-        content = post["content"]
-        st.write(content)
-        if "image" in post:
-            image_data = base64.b64decode(post["image"])
-            st.image(image_data, caption='Uploaded Image', use_column_width=True)
+
+    # Fetch all posts from the database
+    try:
+        posts = session.query(Post).all()  # Fetch all posts from the database
+        if posts:
+            import random
+            random.shuffle(posts)  # Shuffle the posts randomly
+            for post in posts:
+                st.write(post.content)
+                if post.image:  # If an image is associated with the post
+                    image_data = base64.b64decode(post.image)
+                    st.image(image_data, caption='Uploaded Image', use_column_width=True)
+        else:
+            st.info("No posts available.")
+    except Exception as e:
+        st.error(f"Error fetching posts: {str(e)}")
 
 elif menu == "User Profile":
     st.subheader("User Profile")
@@ -315,19 +370,29 @@ elif menu == "User Profile":
     else:
         st.error("User not found!")
 
-elif menu == "Chat":
+if menu == "Chat":
     st.subheader("Chat")
-    selected_user = st.selectbox("Select User", list(user_profiles.keys()))
+    selected_user = st.selectbox("Select User", [user.username for user in session.query(User).all()])
     st.write("Chat with other users here!")
     new_message = st.text_input("Type your message")
+
     if st.button("Send Message"):
         if new_message.strip() != "":
-            if selected_user not in messages:
-                messages[selected_user] = []
-            messages[selected_user].append({"sender": "You", "content": new_message})
-            with open(MESSAGES_FILE, "w") as file:
-                json.dump(messages, file)
+            message = Message(sender="You", recipient=selected_user, content=new_message)
+            session.add(message)
+            session.commit()
             st.success("Message sent successfully!")
+            if menu == "Chat": st.subheader("Chat")
+    selected_user = st.selectbox("Select User", [user.username for user in session.query(User).all()])
+    st.write("Messages:")
+
+    messages = session.query(Message).filter(
+        (Message.sender == "You") & (Message.recipient == selected_user) |
+        (Message.sender == selected_user) & (Message.recipient == "You")
+    ).all()
+
+    for msg in messages:
+        st.write(f"{msg.sender}: {msg.content}")
 
 elif menu == "Group Chat":
     st.subheader("Group Chat")
